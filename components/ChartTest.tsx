@@ -1,20 +1,59 @@
 import React, { useState, useEffect } from 'react';
 import CandlestickChart from './CandlestickChart';
+import useRealTimeData from '../hooks/useRealTimeData';
 import { generateMockData } from '../utils/mockKLineData';
-import { KLineData } from './CandlestickChart';
+import { CONFIG } from '../src/config';
+import { KLineData } from '../types';
 
 const ChartTest = () => {
-  const [data, setData] = useState<KLineData[]>([]);
+  const [dataSource, setDataSource] = useState<'mock' | 'real'>(
+    CONFIG.USE_MOCK_DATA ? 'mock' : 'real'
+  );
+  const [mockData, setMockData] = useState<KLineData[]>([]);
+  const realTimeData = useRealTimeData();
 
+  // 初始化模拟数据
   useEffect(() => {
-    setData(generateMockData(100, 100));
-  }, []);
+    if (dataSource === 'mock') {
+      setMockData(generateMockData(
+        CONFIG.MOCK_DATA.BASE_PRICE, 
+        CONFIG.MOCK_DATA.PERIODS
+      ));
+    }
+  }, [dataSource]);
 
-  if (data.length === 0) {
-    return <div>正在加载数据...</div>;
-  }
+  // 切换数据源
+  const toggleDataSource = () => {
+    setDataSource(prev => prev === 'mock' ? 'real' : 'mock');
+  };
 
-  return <CandlestickChart data={data} />;
+  const data = dataSource === 'mock' ? mockData : realTimeData;
+
+  return (
+    <div>
+      <div style={{ margin: '10px', padding: '10px' }}>
+        <button 
+          onClick={toggleDataSource}
+          style={{
+            padding: '8px 16px',
+            borderRadius: '4px',
+            backgroundColor: '#1890ff',
+            color: 'white',
+            border: 'none',
+            cursor: 'pointer'
+          }}
+        >
+          当前数据源: {dataSource === 'mock' ? '模拟数据' : '实时数据'}
+        </button>
+      </div>
+      
+      {data.length === 0 ? (
+        <div>正在加载数据...</div>
+      ) : (
+        <CandlestickChart data={data} />
+      )}
+    </div>
+  );
 };
 
 export default ChartTest; 
